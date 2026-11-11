@@ -26,6 +26,7 @@ async def run(config_path: str, product: bool, keep: bool) -> int:
     log = JsonlLog("logs/probe.jsonl")
     store = Store()
     bot = cfg.bots[0]
+    print(f"proxy     {bot.proxy or '(direct - host IP)'}")
     rt = BotRuntime(cfg, bot, log, store, DriveCfg())
 
     from playwright.async_api import async_playwright
@@ -37,6 +38,16 @@ async def run(config_path: str, product: bool, keep: bool) -> int:
         await asyncio.sleep(3)
         verdict = await warmup.probe(rt.page)
         print(f"homepage  {verdict.value}")
+        if verdict is Outcome.HARD_BLOCK:
+            # A hard block is reputation and rate, not fingerprint: the same
+            # identity usually clears once the exit stops being hammered.
+            # Retrying inside the cooldown just re-burns it.
+            print(f"  cooling off {cfg.bypass.hard_block_cooldown_s:.0f}s, one retry")
+            await asyncio.sleep(cfg.bypass.hard_block_cooldown_s)
+            await rt.page.goto(rt.base, wait_until="domcontentloaded")
+            await asyncio.sleep(3)
+            verdict = await warmup.probe(rt.page)
+            print(f"retry     {verdict.value}")
         if product and verdict is Outcome.OK and extra.drive.product_url:
             await rt.page.goto(extra.drive.product_url,
                                wait_until="domcontentloaded")
@@ -45,7 +56,9 @@ async def run(config_path: str, product: bool, keep: bool) -> int:
             print(f"product   {verdict.value}")
         print(f"\nurl  {rt.page.url}")
         if verdict is Outcome.HARD_BLOCK:
-            print("\n  HARD BLOCK - identity or exit IP. Run fpcheck, then check the ASN.")
+            print("\n  HARD BLOCK. fpcheck was green, so this is the exit, not the")
+            print("  identity: datacenter ASN, or the IP is rate-limited. Home")
+            print("  broadband in the sale country clears; a DC proxy will not.")
         elif verdict is Outcome.CHALLENGE:
             print("\n  slider present - identity accepted, solvable.")
     except warmup.Blocked as exc:

@@ -56,7 +56,10 @@
           if (h === "model") out.model = "";
           if (h === "platformVersion") out.platformVersion = "15.0.0";
           if (h === "wow64") out.wow64 = false;
-          if (h === "uaFullVersion") out.uaFullVersion = C.uaFullVersions[2][1];
+          if (h === "uaFullVersion") {
+            const gc = full.find((b) => b.brand === "Google Chrome");
+            out.uaFullVersion = (gc || full[0]).version;
+          }
         }
         return Promise.resolve(out);
       },

@@ -82,6 +82,7 @@ PROBE = r"""
       pdf: navigator.pdfViewerEnabled,
       perm_is_eventtarget: permIsTarget,
       perm_tostring: permStr,
+      secure: window.isSecureContext,
       brands: (navigator.userAgentData && navigator.userAgentData.brands) || [],
       ua_mobile: navigator.userAgentData ? navigator.userAgentData.mobile : null,
       ua_platform: navigator.userAgentData ? navigator.userAgentData.platform : null,

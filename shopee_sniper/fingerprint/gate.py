@@ -6,7 +6,22 @@ mismatch is survivable; the set of them together is what produces the
 """
 from __future__ import annotations
 
+import re
+
 from .profile import Profile
+
+_UA_BUILD = re.compile(r"Chrome/\d+\.\d+\.\d+\.\d+")
+
+
+def _ua_core(ua: str) -> str:
+    """Collapse the Chrome build to its reduced form before comparing.
+
+    Chrome's UA reduction means the wire UA says major.0.0.0 while the binary
+    knows a full build. An exact string compare fails on every point release for
+    no reason. Collapsing still catches a wrong major, a wrong platform, and a
+    Chromium-for-Chrome swap, which is what the check is actually for.
+    """
+    return _UA_BUILD.sub("Chrome/#", ua or "")
 
 MAX_VIEWPORT_SLACK = 2
 
@@ -35,7 +50,15 @@ def consistency(prof: Profile, actual: dict) -> list[str]:
 
     eq("navigator.webdriver", False, actual.get("webdriver"),
        "must be false, not undefined")
-    eq("navigator.userAgent", prof.ua, actual.get("ua"))
+    # userAgentData is secure-context gated: about:blank and data: documents
+    # report it undefined. Say so, or the brands check below looks like a
+    # spoofing bug when it is really a harness bug.
+    if actual.get("secure") is False:
+        fails.append("not a secure context: userAgentData is gated here, probe "
+                     "over loopback or https")
+    got_ua = actual.get("ua") or ""
+    if _ua_core(got_ua) != _ua_core(prof.ua):
+        fails.append(f"navigator.userAgent: want {prof.ua!r} got {got_ua!r}")
     eq("navigator.platform", prof.platform, actual.get("platform"))
     eq("hardwareConcurrency", prof.hardware_concurrency, actual.get("cores"))
     eq("deviceMemory", prof.device_memory, actual.get("memory"))
@@ -53,13 +76,14 @@ def consistency(prof: Profile, actual: dict) -> list[str]:
         fails.append("canvas hash unstable across two reads of the same canvas")
 
     if isinstance(actual.get("inner_w"), int):
-        if abs(actual["inner_w"] - prof.width) > MAX_VIEWPORT_SLACK:
+        if abs(actual["inner_w"] - prof.inner_width) > MAX_VIEWPORT_SLACK:
             fails.append(
-                f"innerWidth {actual['inner_w']} vs profile {prof.width} "
+                f"innerWidth {actual['inner_w']} vs profile {prof.inner_width} "
                 "(monitor clamp or zoom mismatch)")
     if isinstance(actual.get("outer_w"), int) and isinstance(actual.get("inner_w"), int):
-        if actual["outer_w"] < actual["inner_w"]:
-            fails.append("outerWidth < innerWidth")
+        dx = actual["outer_w"] - actual["inner_w"]
+        if dx < 8 or dx > 40:
+            fails.append(f"outerWidth - innerWidth is {dx}, no real frame has that")
 
     if (actual.get("plugins") or 0) < 4:
         fails.append(f"navigator.plugins only {actual.get('plugins')} entries")

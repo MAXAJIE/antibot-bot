@@ -24,6 +24,13 @@ from pathlib import Path
 
 from . import env
 
+# Windows 11 at 100% DPI: 8px border each side, ~31px title bar, 40px tab strip,
+# 40px omnibox. outerWidth is the window; innerWidth is what is left of it.
+# Equality between the two is impossible in a real window and is what a forced
+# viewport produces.
+FRAME_X = 16
+FRAME_Y = 120
+
 LOCALES = [("en-MY", "Asia/Kuala_Lumpur"), ("en-SG", "Asia/Singapore"),
            ("id-ID", "Asia/Jakarta"), ("th-TH", "Asia/Bangkok"),
            ("en-PH", "Asia/Manila")]
@@ -70,6 +77,14 @@ class Profile:
         return d
 
     @property
+    def inner_width(self) -> int:
+        return self.width - FRAME_X
+
+    @property
+    def inner_height(self) -> int:
+        return self.height - FRAME_Y
+
+    @property
     def accept_language(self) -> str:
         head = self.languages[0]
         rest = [f"{l};q={round(1.0 - 0.1 * (i + 1), 1)}"
@@ -92,6 +107,11 @@ class Profile:
         With a native UA the client hints are left alone: Chrome emits its own
         brand list and its own GREASE pair, and a hand-maintained copy drifts
         out of date the moment Google rotates the values.
+
+        The parameter means native, so callers pass bypass.native_ua directly.
+        Callers used to pass `not bypass.native_ua`, which inverted the whole
+        thing: native hints were overwritten by the stale copy, and the JS
+        brand list then contradicted the Sec-CH-UA header on the wire.
         """
         cfg = {
             "platform": self.platform,
@@ -139,7 +159,7 @@ def mint(seed: str, explicit_binary: str = "") -> Profile:
         chrome_version=ident["chrome_version"],
         platform="Win32", ch_platform="Windows",
         width=iw, height=ih, screen_w=sw, screen_h=sh,
-        dpr=1.0,
+        dpr=ident["dpr"],
         locale=loc, timezone=tz, gpu_vendor=gv, gpu_renderer=gr,
         hardware_concurrency=_pick(seed, "cores", [4, 8, 12, 16]),
         device_memory=_pick(seed, "mem", [8, 16]),
@@ -176,7 +196,9 @@ def context_args(prof: Profile, proxy: str | None = None,
     request, and a duplicate Sec-CH-UA is a harder tell than a wrong one.
     """
     args: dict = {
-        "viewport": {"width": prof.width, "height": prof.height},
+        # None: let the window decide. A forced viewport equal to the window
+        # size erases the frame, and innerWidth == outerWidth is a tell.
+        "viewport": None,
         "device_scale_factor": prof.dpr,
         "locale": prof.locale,
         "timezone_id": prof.timezone,

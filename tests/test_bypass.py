@@ -48,7 +48,7 @@ def _prof() -> Profile:
 def _actual(**over) -> dict:
     base = dict(webdriver=False, ua="UA", platform="Win32", cores=8, memory=8,
                 languages=["en-MY", "en"], touch=0, dpr=1.0, screen_w=1920,
-                screen_h=1080, avail_h=1032, inner_w=1600, outer_w=1600,
+                screen_h=1080, avail_h=1032, inner_w=1584, outer_w=1600,
                 tz="Asia/Kuala_Lumpur", gl_vendor="Google Inc. (NVIDIA)",
                 gl_renderer="ANGLE (NVIDIA)", canvas_a="a", canvas_b="a",
                 plugins=5, chrome_runtime=True, pdf=True,
@@ -91,3 +91,9 @@ def test_screen_mismatch_fails() -> None:
 def test_permissions_not_eventtarget_fails() -> None:
     assert any("EventTarget" in f
                for f in gate.consistency(_prof(), _actual(perm_is_eventtarget=False)))
+
+
+def test_equal_inner_outer_fails() -> None:
+    """A forced viewport erases the window frame."""
+    assert any("frame" in f
+               for f in gate.consistency(_prof(), _actual(inner_w=1600, outer_w=1600)))

@@ -68,6 +68,19 @@ class Bot:
 
 
 @dataclass(frozen=True)
+class BypassCfg:
+    """Everything the anti-bot layer needs to be steered from config."""
+
+    channel: str = "chrome"
+    executable: str = ""
+    native_ua: bool = True
+    fp_strict: bool = True
+    require_residential: bool = True
+    allow_countries: tuple[str, ...] = ()
+    hard_block_cooldown_s: float = 45.0
+    hard_block_max: int = 2
+
+@dataclass(frozen=True)
 class Config:
     sale: Sale
     timing: Timing
@@ -76,6 +89,7 @@ class Config:
     harvest: Harvest
     sidecar_url: str
     bots: tuple[Bot, ...]
+    bypass: BypassCfg = field(default_factory=BypassCfg)
 
 
 def _tup(v: Any) -> tuple[int, int]:
@@ -87,6 +101,7 @@ def load(path: str | Path) -> Config:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     s, t, p, l, h = (raw["sale"], raw["timing"], raw["proxy"],
                      raw["limits"], raw["harvest"])
+    b = raw.get("bypass") or {}
     root = Path(path).resolve().parent.parent
     sale = Sale(
         t0=dt.datetime.fromisoformat(s["t0"]),
@@ -124,7 +139,16 @@ def load(path: str | Path) -> Config:
             challenge_budget=int(l["challenge_budget"]),
         ),
         harvest=Harvest(lead_ms=int(h["lead_ms"]), ttl_safety=float(h["ttl_safety"])),
-        sidecar_url=str(raw["sidecar"]["url"]),
+        bypass=BypassCfg(
+            channel=str(b.get("channel", "chrome")),
+            executable=str(b.get("executable", "")),
+            native_ua=bool(b.get("native_ua", True)),
+            fp_strict=bool(b.get("fp_strict", True)),
+            require_residential=bool(b.get("require_residential", True)),
+            allow_countries=tuple(b.get("allow_countries") or ()),
+            hard_block_cooldown_s=float(b.get("hard_block_cooldown_s", 45.0)),
+            hard_block_max=int(b.get("hard_block_max", 2)),
+        ),        sidecar_url=str(raw["sidecar"]["url"]),
         bots=tuple(
             Bot(id=b["id"], account=b["account"], proxy=b["proxy"],
                 profile_path=root / "profiles" / f"{b['id']}.json")

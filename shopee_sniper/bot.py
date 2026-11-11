@@ -50,11 +50,14 @@ class BotRuntime:
         """Config literal, then the script. Both in ONE init script so the
         reader can never run before the writer."""
         body = Path(fp.__file__).with_name("patches.js").read_text(encoding="utf-8")
-        cfg = json.dumps(self.prof.stealth_cfg(not self.bp.native_ua))
+        cfg = json.dumps(self.prof.stealth_cfg(self.bp.native_ua))
         return f"window.__FP__={cfg};\n{body}"
 
     async def start(self, pw: Playwright, position: tuple[int, int]) -> None:
-        launch: dict = {"headless": False,
+        # chromium_sandbox defaults to False, which adds --no-sandbox and makes
+        # Chrome paint the "unsupported command-line flag" banner. A hand-
+        # launched Chrome has neither.
+        launch: dict = {"headless": False, "chromium_sandbox": True,
                         "args": fp.launch_args(self.prof, position)}
         if self.bp.executable:
             launch["executable_path"] = self.bp.executable
@@ -76,11 +79,27 @@ class BotRuntime:
             await self.verify_fingerprint()
 
     async def verify_fingerprint(self) -> None:
-        """Refuse to warm up on a contradictory browser."""
+        """Refuse to warm up on a contradictory browser.
+
+        The probe needs a secure context. navigator.userAgentData is gated
+        behind one, so about:blank returns it undefined and the brands check
+        fails for the wrong reason; set_content also reuses the live document,
+        so the document-start script never runs on it. Loopback is potentially
+        trustworthy, and route() serves the document with no socket and no DNS.
+        """
         assert self.page
-        await self.page.goto("about:blank")
-        await self.page.set_content("<html><body></body></html>")
-        actual = await probe.dump(self.page)
+
+        async def _blank(route):
+            await route.fulfill(status=200, content_type="text/html",
+                                body="<html><body></body></html>")
+
+        url = "http://127.0.0.1/__fp__"
+        await self.page.route(url, _blank)
+        try:
+            await self.page.goto(url, wait_until="load")
+            actual = await probe.dump(self.page)
+        finally:
+            await self.page.unroute(url)
         fails = gate.consistency(self.prof, actual)
         for f in fails:
             self.log.write(bot_id=self.bot.id, event="fp_fail", detail=f)
