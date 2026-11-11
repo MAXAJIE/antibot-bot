@@ -2,14 +2,41 @@
 
 Absolute-time sleep only. Loop-sleeping on a computed delta accumulates error
 and will miss a +/-15ms gate.
+
+Windows needs two things the naive version lacked:
+
+  timeBeginPeriod(1), because without it time.sleep(0.0385) rounds up to the
+  next 15.6ms tick and returns around 47ms late. Every schedule built on that
+  is already 10ms+ off before the network is involved.
+
+  A spin margin wide enough to absorb whatever the remaining sleep overshoots
+  by, and a cap on each individual sleep so a single bad tick cannot consume
+  the whole margin.
 """
 from __future__ import annotations
 
+import ctypes
 import re
 import subprocess
+import sys
 import time
 
 NS = 1_000_000_000
+SPIN_NS = 4_000_000      # the last 4ms is spun, never slept
+MAX_SLEEP_S = 0.002      # and no single sleep is longer than 2ms
+
+
+def _raise_timer_resolution() -> None:
+    """Drop the Windows scheduler tick to 1ms for this process's lifetime."""
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.winmm.timeBeginPeriod(1)
+    except Exception:
+        pass
+
+
+_raise_timer_resolution()
 
 
 def now_ns() -> int:
@@ -17,21 +44,15 @@ def now_ns() -> int:
 
 
 def sleep_until_ns(target_ns: int) -> None:
-    """Portable absolute sleep.
-
-    Windows has no clock_nanosleep; coarse-sleep to 1.5ms out, then spin.
-    Roughly 0.3ms accuracy, inside the gate. Costs one core for the last 2ms.
-    """
     while True:
         rem = target_ns - now_ns()
         if rem <= 0:
             return
-        if rem > 2_000_000:
-            time.sleep((rem - 1_500_000) / 1e9)
-        else:
+        if rem <= SPIN_NS:
             while now_ns() < target_ns:
                 pass
             return
+        time.sleep(min(max(rem - SPIN_NS, 200_000) / NS, MAX_SLEEP_S))
 
 
 def sleep_until(target_ns: int) -> float:

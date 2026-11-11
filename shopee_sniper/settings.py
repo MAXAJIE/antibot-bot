@@ -49,6 +49,16 @@ class OtpCfg:
 
 
 @dataclass(frozen=True)
+class BypassCfg:
+    """Mirror of config.BypassCfg for tools that load settings alone."""
+
+    channel: str = "chrome"
+    executable: str = ""
+    native_ua: bool = True
+    fp_strict: bool = True
+
+
+@dataclass(frozen=True)
 class DriveCfg:
     """What to buy and how to recognise it.
 
@@ -92,6 +102,7 @@ class Extras:
     captcha: CaptchaCfg = field(default_factory=CaptchaCfg)
     otp: OtpCfg = field(default_factory=OtpCfg)
     drive: DriveCfg = field(default_factory=DriveCfg)
+    bypass: BypassCfg = field(default_factory=BypassCfg)
 
 
 def load_dict(raw: dict) -> Extras:
@@ -99,6 +110,7 @@ def load_dict(raw: dict) -> Extras:
     cap = raw.get("captcha") or {}
     otp = raw.get("otp") or {}
     drv = raw.get("drive") or {}
+    byp = raw.get("bypass") or {}
     return Extras(
         ui=UiCfg(bool(ui.get("enabled", True)), str(ui.get("host", "127.0.0.1")),
                  int(ui.get("port", 8732))),
@@ -111,6 +123,10 @@ def load_dict(raw: dict) -> Extras:
                    str(otp.get("password", "")), str(otp.get("sender", "")),
                    float(otp.get("timeout_s", 90.0))),
         drive=DriveCfg.from_dict(drv),
+        bypass=BypassCfg(str(byp.get("channel", "chrome")),
+                         str(byp.get("executable", "")),
+                         bool(byp.get("native_ua", True)),
+                         bool(byp.get("fp_strict", True))),
     )
 
 

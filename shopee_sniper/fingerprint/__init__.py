@@ -1,0 +1,1 @@
+"""Phase 1: identity resolution, document-start stealth, contradiction gate."""

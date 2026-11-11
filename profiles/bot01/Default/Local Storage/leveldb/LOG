@@ -1,3 +1,2 @@
-2026/11/11-17:49:18.833 3ad4 Reusing MANIFEST C:\Users\Chin Jie\PyCharmMiscProject\shopee-sniper\profiles\bot01\Default\Local Storage\leveldb/MANIFEST-000001
-2026/11/11-17:49:19.026 3ad4 Recovering log #4
-2026/11/11-17:49:19.090 3ad4 Reusing old log C:\Users\Chin Jie\PyCharmMiscProject\shopee-sniper\profiles\bot01\Default\Local Storage\leveldb/000004.log 
+2026/11/11-18:16:39.683 54a8 Creating DB C:\Users\Chin Jie\PyCharmMiscProject\shopee-sniper\profiles\bot01\Default\Local Storage\leveldb since it was missing.
+2026/11/11-18:16:39.804 54a8 Reusing MANIFEST C:\Users\Chin Jie\PyCharmMiscProject\shopee-sniper\profiles\bot01\Default\Local Storage\leveldb/MANIFEST-000001

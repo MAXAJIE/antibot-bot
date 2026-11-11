@@ -1,0 +1,78 @@
+sale:
+  t0: "2026-11-11T17:45:00+08:00"   # 必须是未来时间、带时区
+  region: my
+  item_id: 53557948238
+  model_id: 0                        # 靠点击规格选，0 即可
+  quantity: 1
+  payment_channel_id: 0              # drive 走文本匹配，这里不生效
+  shipping_method: standard
+  voucher: null
+
+timing:
+  needle_offset_ms: -15
+  jitter_sigma_ms: 60
+  jitter_clamp_ms: [-40, 180]
+  rtt_samples: 20
+  rtt_min_samples: 15
+  rtt_ewma_alpha: 0.3
+  ingest_est_ms: 25
+  keepalive_ping_s: 5
+  drift_alarm_ms: 2.0
+
+proxy:
+  max_p50_ms: 400
+  preflight_lead_s: 600
+  preflight_attempts: 3
+
+limits:
+  retry_cap: 2
+  retry_backoff_ms: 120
+  challenge_budget: 3
+
+harvest:
+  lead_ms: 3000
+  ttl_safety: 0.5
+
+sidecar:
+  url: "http://127.0.0.1:8731"
+
+ui:
+  enabled: true
+  host: "127.0.0.1"
+  port: 8732
+
+captcha:
+  enabled: true
+  score_min: 0.35
+  retry_shift_px: 4
+  settle_ms: 60
+
+otp:
+  enabled: false
+  host: ""
+  port: 993
+  user: ""
+  password: ""
+  sender: ""
+  timeout_s: 90
+
+drive:
+  mode: test
+  product_url: "https://shopee.com.my/DJI-Osmo-Pocket-4-Handheld-1-CMOS-4K-240FPS-14-Stop-Dynamic-Range-Built-in-Film-Tones-107GB-Internal-Storage-i.21991083.53557948238"
+  variant: "Creator Combo"                        # 见下方，先留空
+  quantity: 1
+  expected_price: 2700.00
+  price_tolerance: 0.10              # 首跑放宽，通了再收到 0.02
+  payment_method: "Cash on Delivery"
+  address_label: ""                  # 见下方，填收件人名字片段
+  selectors_path: "config/selectors.json"
+  keep_open: true
+  step_timeout_ms: 6000
+
+bots:
+  - id: bot01
+    account: acct01
+    proxy: ""
+  - id: bot02
+    account: acct02
+    proxy: ""
