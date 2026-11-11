@@ -1,0 +1,46 @@
+# Copy to config/bots.yaml and fill in.
+sale:
+  t0: "2026-11-15T20:00:00+08:00"
+  region: sg
+  item_id: 0
+  model_id: 0
+  quantity: 1
+  payment_channel_id: 0
+  shipping_method: standard
+  voucher: null
+
+timing:
+  needle_offset_ms: -15
+  jitter_sigma_ms: 60
+  jitter_clamp_ms: [-40, 180]
+  rtt_samples: 20
+  rtt_min_samples: 15
+  rtt_ewma_alpha: 0.3
+  ingest_est_ms: 25
+  keepalive_ping_s: 5
+  drift_alarm_ms: 2.0
+
+proxy:
+  max_p50_ms: 400
+  preflight_lead_s: 600
+  preflight_attempts: 3
+
+limits:
+  retry_cap: 2
+  retry_backoff_ms: 120
+  challenge_budget: 3
+
+harvest:
+  lead_ms: 3000
+  ttl_safety: 0.5
+
+sidecar:
+  url: "http://127.0.0.1:8731"
+
+bots:
+  - id: bot01
+    account: acct01
+    proxy: "http://user:pass@proxy.example:8080"
+  - id: bot02
+    account: acct02
+    proxy: "http://user:pass@proxy2.example:8080"

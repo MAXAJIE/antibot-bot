@@ -1,0 +1,8 @@
+.venv/
+bin/
+logs/
+profiles/*.json
+contract/cap_*.json
+config/bots.yaml
+__pycache__/
+*.pyc
