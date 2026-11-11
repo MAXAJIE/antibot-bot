@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from .. import contract
 from ..log import JsonlLog
+from ..observe.headerhash import header_hash
 from .clock import fire_instant, now_ns, sleep_until
 
 
@@ -81,7 +82,7 @@ def fire(conn_id: str, fx: contract.Fixture, *, t0_ns: int, rtt_ns: int,
         overshoot_ms=round(overshoot, 3),
         send_error_ms=round((result.t_send_ns - target) / 1e6, 3),
         rtt_ms=round(rtt_ns / 1e6, 3),
-        headers_hash=hash(tuple(h for h, _ in fx.ordered_headers())),
+        headers_hash=header_hash(fx.ordered_headers()),
     )
     return result
 

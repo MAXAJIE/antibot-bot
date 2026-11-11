@@ -1,4 +1,4 @@
-"""Phase 6 stub. Contract defined, implementation deferred."""
+"""Phase 6 election. One needle, the rest jittered, exactly one winner."""
 from __future__ import annotations
 
 import asyncio
@@ -14,6 +14,7 @@ class Election:
     needle_offset_ms: int
     jitter_sigma_ms: int
     clamp_ms: tuple[int, int]
+    rng: random.Random | None = None
     winner: str | None = None
     halted: bool = False
 
@@ -25,7 +26,8 @@ class Election:
             if b == needle:
                 off = self.needle_offset_ms
             else:
-                off = int(random.gauss(0, self.jitter_sigma_ms))
+                rng = self.rng or random
+                off = int(rng.gauss(0, self.jitter_sigma_ms))
                 lo, hi = self.clamp_ms
                 off = max(lo, min(hi, off))
             out[b] = self.t0_ns + off * 1_000_000

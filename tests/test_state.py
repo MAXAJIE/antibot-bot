@@ -59,3 +59,24 @@ def test_challenge_budget() -> None:
     s.ready()
     s.arm()
     assert s.challenge("z") is False
+
+
+def test_disarm_returns_to_ready() -> None:
+    s = armed()
+    s.disarm("token stale")
+    assert s.state is State.READY
+    assert s.history[-1][2] == "token stale"
+
+
+def test_disarm_ignored_while_firing() -> None:
+    s = armed()
+    s.fire()
+    s.disarm("too late")
+    assert s.state is State.FIRING
+
+
+def test_rearm_after_disarm() -> None:
+    s = armed()
+    s.disarm("stale")
+    s.arm()
+    assert s.state is State.ARMED

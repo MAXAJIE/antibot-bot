@@ -18,4 +18,5 @@ dev = ["pytest>=8.0", "scapy>=2.5"]
 [tool.setuptools]
 packages = ["shopee_sniper", "shopee_sniper.fingerprint", "shopee_sniper.sign",
             "shopee_sniper.session", "shopee_sniper.timing", "shopee_sniper.net",
-            "shopee_sniper.orchestrator", "shopee_sniper.ui"]
+            "shopee_sniper.orchestrator", "shopee_sniper.ui",
+            "shopee_sniper.captcha", "shopee_sniper.observe"]

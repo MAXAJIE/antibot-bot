@@ -1,7 +1,8 @@
 """Phase 3. Session state machine with guarded transitions.
 
 Guards matter more than the enum: ARMED is only legal when every precondition
-holds, and a session that leaves ARMED must re-earn it.
+holds, and a session that leaves ARMED must re-earn it. Disarming is the one
+legal step back, and only from ARMED.
 """
 from __future__ import annotations
 
@@ -26,7 +27,8 @@ TRANSITIONS: dict[State, set[State]] = {
     State.COLD: {State.WARMING, State.BANNED},
     State.WARMING: {State.READY, State.CHALLENGED, State.BANNED, State.FAILED},
     State.READY: {State.ARMED, State.CHALLENGED, State.BANNED, State.FAILED},
-    State.ARMED: {State.FIRING, State.CHALLENGED, State.BANNED, State.FAILED},
+    State.ARMED: {State.FIRING, State.READY, State.CHALLENGED, State.BANNED,
+                  State.FAILED},
     State.FIRING: {State.PLACED, State.FAILED, State.CHALLENGED, State.BANNED},
     State.PLACED: {State.FAILED},
     State.FAILED: {State.READY, State.WARMING},

@@ -84,7 +84,7 @@ def _tup(v: Any) -> tuple[int, int]:
 
 
 def load(path: str | Path) -> Config:
-    raw = yaml.safe_load(Path(path).read_text())
+    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     s, t, p, l, h = (raw["sale"], raw["timing"], raw["proxy"],
                      raw["limits"], raw["harvest"])
     root = Path(path).resolve().parent.parent

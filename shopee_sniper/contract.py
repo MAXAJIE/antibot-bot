@@ -35,7 +35,7 @@ class Fixture:
 
 
 def load(path: str | Path) -> Fixture:
-    raw = json.loads(Path(path).read_text())
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
     for k in REQUIRED:
         if k not in raw:
             raise ValueError(f"fixture missing {k!r}")

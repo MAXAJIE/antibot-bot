@@ -1,0 +1,6 @@
+{
+  "_comment": "Override any key from drive.DEFAULTS. Frontend edits this file.",
+  "price": ["[class*='pqTWkA']", "[class*='product-price']"],
+  "buy_now": ["button[class*='buy-now']"],
+  "place_order": ["button[class*='place-order']"]
+}

@@ -6,3 +6,5 @@ contract/cap_*.json
 config/bots.yaml
 __pycache__/
 *.pyc
+contract/ja3_*.json
+state/
